@@ -1,26 +1,19 @@
-"""
-main.py: třetí projekt do Engeto Online Python Akademie
-
-author: Jakub Merta
-email: merta.arch@gmail.com
-"""
-
-############################################ KNIHOVNY:
-
+# KNIHOVNY:
 from requests import get
 from bs4 import BeautifulSoup
 import csv 
 import re
+from pprint import pprint
 import sys
 
 ##########################################################################################
-# ↓↓↓↓↓ FUNKCE, KTERÁ ZÍSKÁ URL VŠECH OBCÍ V JEDNOM OKRESE:
+# ↓↓↓↓↓ ZÍSKÁNÍ URL VŠECH OBCÍ V JEDNOM OKRESE → → → → → → → FUNGUJE
 ##########################################################################################
 
 def ziskej_adresy_obci_v_okrese(URL):
     odpoved_okres = get(URL)
     rozdelene_html_okres = BeautifulSoup(odpoved_okres.text, 'html.parser')
-    url_obce = rozdelene_html_okres.find_all("a", href=lambda h: h and "ps311" in h) #→ najde všechny tagy <a> kde atribut href obsahuje ps311
+    url_obce = rozdelene_html_okres.find_all("a", href=lambda h: h and "ps311" in h)
     obec_odkazy = [odkaz for odkaz in url_obce if odkaz.text.strip() != "X"]
     url_vsech_obci = [
         "https://www.volby.cz/pls/ps2017nss/" + odkaz["href"]
@@ -29,13 +22,13 @@ def ziskej_adresy_obci_v_okrese(URL):
     return url_vsech_obci
 
 ##########################################################################################
-# ↓↓↓↓↓ FUNKCE, KTERÁ ZÍSKÁ DATA O VÝSLEDCÍCH VOLEB ZE VŠECH OBCÍ V JEDNOM OKRESE:
+# ↓↓↓↓↓ ZÍSKÁNÍ DAT O VÝSLEDCÍCH VOLEB ZE VŠECH OBCÍ V JEDNOM OKRESE:
 ##########################################################################################
 
 def ziskej_vysledky_obci(URL):
     vysledky = []
     hlavicka = []
-    for index, adresa_obce in enumerate(URL):
+    for idx, adresa_obce in enumerate(URL):
         odpoved_obec = get(adresa_obce)
         rozdelene_html = BeautifulSoup(odpoved_obec.text, 'html.parser')
 
@@ -61,7 +54,7 @@ def ziskej_vysledky_obci(URL):
                 hlasy_stran[nazev.text.strip()] = hlasy.text.strip().replace('\xa0', '')
 
         # Sestavení hlavičky pouze z první obce
-        if index == 0:
+        if idx == 0:
             hlavicka = [
                 "Kód obce",
                 "Název obce",
@@ -75,7 +68,7 @@ def ziskej_vysledky_obci(URL):
     return vysledky, hlavicka
 
 ##############################################################################
-# ↓↓↓↓↓↓↓↓↓↓ FUNKCE, KTERÁ ULOŽÍ VÝSLEDKY DO CSV SOUBORU:
+# ↓↓↓↓↓↓↓↓↓↓ ULOŽENÍ VÝSLEDKŮ DO CSV SOUBORU:
 ##############################################################################
 
 def uloz_vysledky_do_csv(hlavicka, vysledky, nazev_souboru):
@@ -90,23 +83,38 @@ def uloz_vysledky_do_csv(hlavicka, vysledky, nazev_souboru):
 ##############################################################################
 
 def hlavni_funkce(adresa_okresu, ziskej_nazev_souboru):
-        print("STAHUJI DATA Z URL")
+        print("STAHUJI DATA Z VYBRANÉHO URL")
         cela_adresa_obce_list = ziskej_adresy_obci_v_okrese(adresa_okresu)
         vysledky, hlavicka = ziskej_vysledky_obci(cela_adresa_obce_list)
         print("UKLADAM DATA DO CSV SOUBORU")
         uloz_vysledky_do_csv(hlavicka, vysledky, ziskej_nazev_souboru)
         print("UKONCUJI PROGRAM")
 
+adresa_okresu = sys.argv[1]
+ziskej_nazev_souboru = sys.argv[2]
 
 ##############################################################################
 # ↓↓↓↓↓↓↓↓↓↓ VOLÁNÍ PROGRAMU:
 ##############################################################################
 
 if __name__ == "__main__":
-    adresa_okresu = sys.argv[1]
-    ziskej_nazev_souboru = sys.argv[2]
     hlavni_funkce(adresa_okresu, ziskej_nazev_souboru)
 
 
-# ZDe je příkaz pro spuštění programu do příkazového řádku, např. pro okres Jindřichův Hradec:
-# python main.py "https://www.volby.cz/pls/ps2017nss/ps32?xjazyk=CZ&xkraj=3&xnumnuts=3103" "vysledky_obce.csv"
+# 1.argument: URL Kraje: https://www.volby.cz/pls/ps2017nss/ps32?xjazyk=CZ&xkraj=2&xnumnuts=2107
+# 2.argument: Název souboru: vysledky_obce.csv
+
+# STAHUJI DATA Z VYBRANEHO URL:
+# UKLADAM DATA DO CSV SOUBORU:
+# UKONČUJI PROGRAM: 
+
+
+# Příkaz pro spuštění programu:
+# python election.py "https://www.volby.cz/pls/ps2017nss/ps32?xjazyk=CZ&xkraj=2&xnumnuts=2107" "vysledky_obce.csv"
+
+
+
+"""
+adresa_okresu = sys.argv[1]
+ziskej_nazev_souboru = sys.argv[2]
+"""
